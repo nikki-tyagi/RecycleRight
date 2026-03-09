@@ -89,6 +89,27 @@ Assets/_Project/
 
 ---
 
+## Architecture: Socket Correctness & Filtering
+
+The project uses a **Key-Lock system** built on top of XR Interaction Toolkit's socket interactors to ensure only the correct waste type can be accepted by each bin.
+
+**How it works:**
+
+1. **Key** — A `ScriptableObject` asset representing a waste category (e.g., Paper, Plastic, Glass). Each key is a unique identifier stored in `SocketKeys/`.
+2. **Keychain** — A `MonoBehaviour` attached to each trash prefab. It holds one or more `Key` assets that identify the trash type (tracked by instance ID for fast lookup).
+3. **Lock** — A serializable validator attached to each bin's socket interactor. It defines which `Key`(s) the socket accepts.
+4. **XRLockSocketInteractor** — A custom socket interactor that extends Unity's `XRSocketInteractor`. Before allowing an object to snap in, it checks whether the object's `Keychain` contains the required `Key` defined by the socket's `Lock`. If the key doesn't match, the interaction is rejected.
+5. **XRGridSocketInteractor** — Extends the socket system to support a 2D grid layout, allowing a single bin to hold multiple items in organized positions.
+
+**Flow:**
+```
+Player grabs trash → Places in bin → Socket checks Lock vs Keychain
+  ├─ Key matches    → Accept: score increments, green outline, success audio
+  └─ Key mismatch   → Reject: red outline, wrong audio, item returns to original position
+```
+
+---
+
 ## XR Interaction Simulator
 
 > **The XR Controller Simulator by Unity is very useful for testing XR interactions without a physical headset, but it can be complex to navigate initially.**
